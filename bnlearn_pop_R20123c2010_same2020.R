@@ -10,12 +10,12 @@ library(dplyr)
 
 setwd("D:/人口密度论文投稿/data&R")
 #加载数据
-temp = read.table("./data1/city_pop_Y6_Lat_geo9.txt",header = TRUE,sep = ',')
+temp = read.table("./data1/city_pop_Y6_Lat_geo9_2010.txt",header = TRUE,sep = ',')
 temp
 
 # 检查 变量呈正态分布
 par(mfrow = c(3, 4), mar = c(2, 2, 2, 2))
-for (var in c("pop_lv","dem", "road","gaia_c_lv", "crop_lv","city_lv","town_lv","gj_lv","bare_lv","black_revise","forest_lv")) {
+for (var in c("pop_lv","dem","lake_lv", "gaia_c_lv", "crop_lv","city_lv","town_lv","gj_lv","bare_lv","black_revise1","forest_lv")) {
 
   x = temp[, var]
   hist(x, prob = TRUE, xlab = var, ylab = "", main = var, col = "ivory")
@@ -24,9 +24,10 @@ for (var in c("pop_lv","dem", "road","gaia_c_lv", "crop_lv","city_lv","town_lv",
         add = TRUE,lwd = 2, col = "steelblue")
 }
 
-vars<-c("dem","lake_lv","gaia_c_lv", "crop_lv","city_lv","town_lv","gj_lv","black_revise","forest_lv","bare_lv","geo_subdivision6","pop_lv")
+vars<-c("dem","lake_lv","gaia_c_lv", "crop_lv","city_lv","town_lv","gj_lv","black_revise1","forest_lv","bare_lv","geo_subdivision6","pop_lv")
 diff <- temp[vars]
 diff
+
 
 mean_pop =mean(diff$pop_lv)
 sd_pop =sd(diff$pop_lv)
@@ -42,9 +43,9 @@ diff$lake_lv = (diff$lake_lv-lake_lv_min)/(lake_lv_max-lake_lv_min)
 dem_max = max(diff$dem)
 dem_min = min(diff$dem)
 diff$dem = (diff$dem-dem_min)/(dem_max-dem_min)
-black_max = max(diff$black_revise)
-black_min = min(diff$black_revise)
-diff$black_revise = (diff$black_revise-black_min)/(black_max-black_min)
+black_max = max(diff$black_revise1)
+black_min = min(diff$black_revise1)
+diff$black_revise1 = (diff$black_revise1-black_min)/(black_max-black_min)
 
 
 diff_cv = diff
@@ -102,7 +103,9 @@ par(mgp=c(20,20,20))
 graphviz.plot(ug, layout = "fdp", shape = "ellipse")
 print("4")
 
-set.seed(123458)
+
+
+set.seed(1234)
 diff <- diff%>%
   group_by(geo_subdivision6)%>%
   mutate(data_spilt = if_else(runif(n())<0.7,'Train','Test'))
@@ -121,17 +124,14 @@ if (!is.data.frame(train_data)) {
 class(train_data)
 # 现在尝试从数据框中删除 'data_spilt' 列
 train_data <- train_data %>% select(-data_spilt)
-
 train_data$pop_lv = as.numeric(train_data$pop_lv)
-train_data$dem = as.numeric(train_data$dem)
-train_data$lake_lv = as.numeric(train_data$lake_lv)
 train_data$gaia_c_lv=as.numeric(train_data$gaia_c_lv)
 train_data$crop_lv = as.numeric(train_data$crop_lv)
 train_data$city_lv = as.numeric(train_data$city_lv)
 train_data$town_lv = as.numeric(train_data$town_lv)
 train_data$gj_lv = as.numeric(train_data$gj_lv)
 train_data$forest_lv = as.numeric(train_data$forest_lv)
-train_data$black_revise=as.numeric(train_data$black_revise)
+train_data$black_revise1=as.numeric(train_data$black_revise1)
 train_data$geo_subdivision6 = as.factor(train_data$geo_subdivision6)
 print("2")
 
@@ -146,17 +146,20 @@ train_data <- data.frame(lapply(train_data, function(x) {
     x
   }
 }))
-
-bl = tiers2blacklist(list("gaia_c_lv", c("crop_lv","city_lv","town_lv","gj_lv","black_revise","forest_lv","pop_lv","geo_subdivision6")))
+# c("bare_lv","town_lv"),c("dem","lake_lv"),c("dem","gj_lv")
+bl = tiers2blacklist(list("gaia_c_lv", c("crop_lv","city_lv","town_lv","gj_lv","black_revise1","forest_lv","pop_lv","geo_subdivision6")))
 # 黑名单
 bl = rbind(bl, c("geo_subdivision6","lake_lv"),c("geo_subdivision6","dem"),
            c("geo_subdivision6","city_lv"),c("geo_subdivision6","bare_lv"),
-           c("geo_subdivision6","crop_lv"),c("geo_subdivision6","black_revise"),
+           c("geo_subdivision6","crop_lv"),c("geo_subdivision6","black_revise1"),
            c("geo_subdivision6","town_lv"),c("geo_subdivision6","gj_lv"),
            c("geo_subdivision6","forest_lv"),c("gj_lv","forest_lv"),
-           c("city_lv","forest_lv"),c("gaia_c_lv","forest_lv"),c("black_revise","forest_lv"),
-           c("crop_lv","black_revise"),c("crop_lv","city_lv"),c("crop_lv","gj_lv"),c("gj_lv","crop_lv"),
-           c("lake_lv","black_revise")
+           c("city_lv","forest_lv"),c("gaia_c_lv","forest_lv"),c("black_revise1","forest_lv"),
+           c("bare_lv","town_lv"),c("dem","lake_lv"),c("dem","gj_lv"),c("dem","city_lv"),c("crop_lv","city_lv")
+           ,c("forest_lv","city_lv"),c("bare_lv","city_lv"),
+           c("lake_lv","gj_lv"),c("pop_lv","gj_lv"),
+           c("bare_lv","pop_lv"),c("bare_lv","lake_lv"),c("gaia_c_lv","lake_lv"),
+           c("gj_lv","town_lv")
 )
 bl
 
@@ -166,10 +169,17 @@ wl = matrix(c("forest_lv","pop_lv",
               "crop_lv","pop_lv",
               "city_lv","pop_lv",
               "town_lv","pop_lv",
-              "black_revise","pop_lv",
+              "black_revise1","pop_lv",
               "geo_subdivision6","pop_lv",
               "lake_lv","pop_lv",
-              "town_lv","black_revise"
+              "gj_lv","black_revise1",
+              "dem","bare_lv",
+              "dem","lake_lv",
+              "bare_lv","pop_lv",
+              "gj_lv","pop_lv",
+              "black_revise1","city_lv",
+              "dem","gj_lv"
+              
               
 ),
 ncol = 2, byrow = TRUE, dimnames = list(NULL, c("from", "to")))
@@ -188,6 +198,8 @@ strength.plot(avg.raw.full, str.raw, shape = "ellipse", highlight = list(arcs = 
 #threshold判断电弧强度
 avg.raw.simpler = averaged.network(str.raw, threshold = 0.80)
 strength.plot(avg.raw.simpler, str.raw,layout = "dot", shape = "ellipse", highlight = list(arcs = wl))
+
+# hc(train_data, whitelist = wl, blacklist = bl,restart = 0, perturb = 1, max.iter = 5, maxp = Inf, optimized = TRUE)
 
 
 bnNew = bn.fit(avg.raw.simpler,data=train_data, method = "mle-cg")
@@ -215,9 +227,9 @@ train_R2 = R2_train(train_data$pop_lv,train_diff)
 train_R2
 train_mse <- mean((train_diff - train_data$pop_lv)^2)
 train_rmse <- sqrt(train_mse)
-train_mae <- mean(abs(train_diff - train_data$pop_lv))
+train_mae <- mean(abs(train_data$pop_lv - train_diff))
 train_cor <- cor(train_diff, train_data$pop_lv)^2
-print(list(MSE=train_mse, RMSE=train_rmse,MAE=train_mae, COR=train_cor,R2=train_R2)) 
+print(list(MSE=train_mse, RMSE=train_rmse ,MAE=train_mae, COR=train_cor,R2=train_R2)) 
 # 残差的标准差
 residuals_sd= sd(train_diff-train_data$pop_lv)
 print(list(Residuals_Sd = residuals_sd))
@@ -232,15 +244,13 @@ if (!is.data.frame(test_data)) {
 # 现在尝试从数据框中删除 'data_spilt' 列
 test_data <- test_data %>% select(-data_spilt)
 test_data$pop_lv = as.numeric(test_data$pop_lv)
-test_data$dem = as.numeric(test_data$dem)
-test_data$lake_lv = as.numeric(test_data$lake_lv)
 test_data$gaia_c_lv=as.numeric(test_data$gaia_c_lv)
 test_data$crop_lv = as.numeric(test_data$crop_lv)
 test_data$city_lv = as.numeric(test_data$city_lv)
 test_data$town_lv = as.numeric(test_data$town_lv)
 test_data$gj_lv = as.numeric(test_data$gj_lv)
 test_data$forest_lv = as.numeric(test_data$forest_lv)
-test_data$black_revise=as.numeric(test_data$black_revise)
+test_data$black_revise1=as.numeric(test_data$black_revise1)
 test_data$geo_subdivision6 = as.factor(test_data$geo_subdivision6)
 print("2")
 
@@ -263,7 +273,7 @@ test_R2
 
 test_mse <- mean((test_diff - test_data$pop_lv)^2)
 test_rmse <- sqrt(test_mse)
-test_mae <- mean(abs(test_diff - test_data$pop_lv))
+test_mae <- mean(abs(test_data$pop_lv - test_diff))
 test_cor <- cor(test_diff, test_data$pop_lv)
 print(list(MSE=test_mse, RMSE=test_rmse,MAE=test_mae, COR=test_cor,R2 = test_R2))
 
@@ -292,9 +302,8 @@ xval
 round(err, digits = 3)
 mean(err)
 
-
 predcor =structure(numeric(7),
-                   names = c("crop_lv","black_revise", "city_lv","town_lv","gj_lv","gaia_c_lv","forest_lv"))
+                   names = c("crop_lv","black_revise1", "city_lv","town_lv","gj_lv","gaia_c_lv","forest_lv"))
 for (var in names(predcor)) {
   
   xval_other = bn.cv(train_data, bn = "hc",
@@ -313,12 +322,13 @@ round(coefficients(bnNew$pop_lv), digits = 4)
 coefficients(bnNew$pop_lv)
 
 
-#预测数据
-newdata = read.table("./data1/China1000Asia_Latp_bf4_geo10_1.txt",header = TRUE,sep = ',')
 
+
+#预测数据
+newdata = read.table("./data1/China1000Asia_Latp_bf4_geo9_2010.txt",header = TRUE,sep = ',')
 colMeans(newdata)
 
-vars<-c("dem","lake_lv","black_revise","gaia_c_lv", "crop_lv","city_lv","town_lv","gj_lv","bare_lv","forest_lv","geo_subdivision6")
+vars<-c("dem","lake_lv","black_revise1","gaia_c_lv", "crop_lv","city_lv","town_lv","gj_lv","bare_lv","forest_lv","geo_subdivision6")
 diff_pre <- newdata[vars]
 diff_pre
 
@@ -336,20 +346,15 @@ maxmin_pre = function(data,min1,max1){
 diff_pre$dem = maxmin_pre(diff_pre$dem,dem_min,dem_max)
 diff_pre$lake_lv = maxmin_pre(diff_pre$lake_lv,lake_lv_min,lake_lv_max)
 diff_pre$gaia_c_lv = maxmin_pre(diff_pre$gaia_c_lv,gaia_min,gaia_max)
-diff_pre$black_revise = maxmin_pre(diff_pre$black_revise,black_min,black_max)
+diff_pre$black_revise1 = maxmin_pre(diff_pre$black_revise1,black_min,black_max)
 
-
-diff_pre$dem = as.numeric(diff_pre$dem)
-diff_pre$lake_lv = as.numeric(diff_pre$lake_lv)
 diff_pre$gaia_c_lv=as.numeric(diff_pre$gaia_c_lv)
 diff_pre$crop_lv = as.numeric(diff_pre$crop_lv)
 diff_pre$city_lv =as.numeric(diff_pre$city_lv)
 diff_pre$town_lv =as.numeric(diff_pre$town_lv)
 diff_pre$gj_lv =as.numeric(diff_pre$gj_lv)
 diff_pre$forest_lv =as.numeric(diff_pre$forest_lv)
-diff_pre$bare_lv = as.numeric(diff_pre$bare_lv)
-diff_pre$black_revise=as.numeric(diff_pre$black_revise)
-
+diff_pre$black_revise1=as.numeric(diff_pre$black_revise1)
 
 diff_pre$geo_subdivision6 = as.factor(diff_pre$geo_subdivision6)
 print("6")
@@ -365,16 +370,34 @@ pop_predict = as.data.frame(prediction)
 
 pop_predict$prediction = exp(pop_predict$prediction)-1
 pop_predict$prediction = pop_predict$prediction*sd_pop+mean_pop
+# pop_predict$prediction = pop_predict$prediction*(pop_max-pop_min)+pop_min
 
 #dataframe添加列
 pop_predict$IIDD = newdata$IIDD
-pop_predict10 = pop_predict 
+pop_predict10 = pop_predict
 pop_predict$xian = newdata$xian
 pop_predict$Lat = newdata$Lat
 pop_predict$Lon = newdata$Lon
+pop_predict$city_lv = newdata$city_lv
+pop_predict$town_lv = newdata$town_lv
+pop_predict$crop_lv = newdata$town_lv
+pop_predict$gj_lv = newdata$gj_lv
+pop_predict$resid_lv = newdata$resid_lv
+pop_predict$bare_lv = newdata$bare_lv
+pop_predict$forest_lv = newdata$forest_lv
+pop_predict$lake_lv = newdata$lake_lv
+pop_predict$resid_lv = newdata$resid_lv
+pop_predict$gaia_c_lv = newdata$gaia_c_lv
+pop_predict$resid_lv = newdata$resid_lv
+pop_predict$black_revise = newdata$black_revise1
+
+pop_predict$class9 = newdata$class9
+pop_predict$xiang_id1 = newdata$xiang_id1
 pop_predict$world = newdata$world
 pop_predict$land = newdata$land
-pop_predict$class = newdata$class_1
+pop_predict$pop_xian = newdata$pop_xian
+
+pop_predict
 # row.names = F表示index省略
-write.table(pop_predict, file = "./predict/pop_predict_bnlearn_Lat55f_1.csv",sep = ",",row.names = F,quote = F)
+write.table(pop_predict, file = "./predict/pop_predict_bnlearn_Lat55_2010a_xin1.csv",sep = ",",row.names = F,quote = F)
 
